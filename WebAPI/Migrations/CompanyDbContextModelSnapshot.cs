@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using WebAPI.DataBase;
+using WebAPI.DbContext;
 
 #nullable disable
 
 namespace WebAPI.Migrations
 {
-    [DbContext(typeof(CompanyDbContext))]
+    [DbContext(typeof(CompanyMSSqlDbContext))]
     partial class CompanyDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

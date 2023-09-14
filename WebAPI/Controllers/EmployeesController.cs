@@ -1,7 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebAPI.DataBase;
+using System.Collections.Generic;
+using WebAPI.DbContext;
+using WebAPI.DbRepository.Interfaces;
 using WebAPI.Model;
+using WebAPI.Model.Domain;
+using WebAPI.Model.DTO;
 
 namespace WebAPI.Controllers
 {
@@ -9,16 +13,28 @@ namespace WebAPI.Controllers
     [Route("api/[controller]")]
     public class EmployeesController : Controller
     {
-        private readonly CompanyDbContext _db;
-        public EmployeesController(CompanyDbContext db) { _db = db; }
+        private readonly IEmployeesRepository employeesRepository;
+        private readonly IDepartmentsRepository departmentsRepository;
 
+        public EmployeesController(IEmployeesRepository employeesRepository, IDepartmentsRepository departmentsRepository) 
+        { 
+            this.employeesRepository = employeesRepository;
+            this.departmentsRepository = departmentsRepository;
+        }
+
+        /// <summary>
+        /// Получение всех сотрудников
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetEmployees()
         {
-            var employees = await _db.Employees.Include(d => d.Department).ToListAsync();
+            var employees = await employeesRepository.GetEmployeesAsync();
             var employeesDTO = new List<EmployeeDTO>();
+
+            //Convert Employee list to EmployeeDTO list
             if (employees != null)
             {
                 foreach (var employee in employees)
@@ -31,24 +47,32 @@ namespace WebAPI.Controllers
                         Birthday = employee.Birthday,
                         WorksFrom = employee.WorksFrom == null ? null : employee.WorksFrom,
                         Salary = employee.Salary
-                    }); ;
+                    });
                 }
             }
             return Ok(employeesDTO);
         }
 
+        /// <summary>
+        /// Получение сотрудника по id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetEmployeeById(int id)
         {
-            var employee = await _db.Employees.Include(d => d.Department).FirstOrDefaultAsync(e => e.Id == id);
+            var employee = await employeesRepository.GetEmployeeByIdAsync(id);
+            
             if (employee == null)
             {
                 return NotFound($"Epmloyee is not found (id = {id}).");
             }
 
+            //Map from Employee to EmployeeDTO to return this back
             var employeeDTO = new EmployeeDTO
             {
                 Id = employee.Id,
@@ -62,102 +86,133 @@ namespace WebAPI.Controllers
             return Ok(employeeDTO);
         }
 
-
+        /// <summary>
+        /// Создание нового сотрудника
+        /// </summary>
+        /// <param name="employee"></param>
+        /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddEmployee(EmployeeDTO employee)
+        public async Task<IActionResult> AddEmployee(AddEmployeeDTO employee)
         {
             if (employee == null) return Ok();
 
-            var dep = await _db.Departments.FirstOrDefaultAsync(e => e.Name == employee.DepartmentName);
-            int depId;
+            //Check if requested department already exists
+            var department = await departmentsRepository.GetDepartmentByNameAsync(employee.DepartmentName);
 
-            if (dep == null)
+            if (department == null)
             {
-                dep = new Department { Name = employee.DepartmentName };
-                await _db.AddAsync(dep);
-                await _db.SaveChangesAsync();
-                depId = dep.Id;
-            }
-            else
-            {
-                depId = dep.Id;
+                //Create new Department in Database
+                department = new Department
+                {
+                    Name = employee.DepartmentName
+                };
+                department = await departmentsRepository.AddDepartmentAsync(department);
             }
 
+            //Map EmployeeDTO to Employee to create new Employee in Database
             var newEmployee = new Employee
             {
                 Name = employee.Name,
                 Birthday = employee.Birthday,
                 WorksFrom = employee.WorksFrom == null ? null : employee.WorksFrom,
                 Salary = employee.Salary,
-                DepartmentId = depId
+                DepartmentId = department.Id
             };
 
-            await _db.AddAsync(newEmployee);
-            await _db.SaveChangesAsync();
-            employee.Id = newEmployee.Id;
+            newEmployee = await employeesRepository.AddEmployeeAsync(newEmployee);
 
-            return Ok(employee);
+            //Map to EmployeeDTO to return result
+            var addedEmployee = new EmployeeDTO
+            {
+                Id = newEmployee.Id,
+                Name = newEmployee.Name,
+                Birthday = newEmployee.Birthday,
+                WorksFrom = newEmployee.WorksFrom,
+                Salary = newEmployee.Salary,
+                DepartmentName = department.Name
+            };
+
+            return Ok(addedEmployee);
         }
 
+        /// <summary>
+        /// Обновление данных сотрудника
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="newEmployee"></param>
+        /// <returns></returns>
         [HttpPut("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateEmployee(int id, EmployeeDTO newEmployee)
+        public async Task<IActionResult> UpdateEmployee(int id, UpdateEmployeeDTO newEmployee)
         {
-            var employee = await _db.Employees.Include(d=>d.Department).FirstOrDefaultAsync(e=>e.Id == id);
-            if (employee == null)
+            var department = await departmentsRepository.GetDepartmentByNameAsync(newEmployee.DepartmentName);
+
+            if (department == null)
+            {
+                //Create new Department in Database
+                department = new Department
+                {
+                    Name = newEmployee.DepartmentName
+                };
+                department = await departmentsRepository.AddDepartmentAsync(department);
+            }
+
+            //Map to Employee to update in Database
+            var employeeForUpdate = new Employee
+            {
+                Id = id,
+                Name = newEmployee.Name,
+                Birthday = newEmployee.Birthday,
+                WorksFrom = newEmployee.WorksFrom == null ? null : newEmployee.WorksFrom,
+                Salary = newEmployee.Salary,
+                DepartmentId = department.Id
+            };
+
+            var updatedEmployee = await employeesRepository.UpdateEmployeeAsync(employeeForUpdate);
+
+            if (updatedEmployee == null)
             {
                 return NotFound($"Epmloyee is not found (id = {id}). No changes made.");
             }
 
-            employee.Name = newEmployee.Name;
-            employee.Birthday = newEmployee.Birthday;
-            employee.WorksFrom = newEmployee.WorksFrom == null ? null : newEmployee.WorksFrom;
-            employee.Salary = newEmployee.Salary;
-
-            if (employee.Department?.Name != newEmployee.DepartmentName)
+            //Map Employee back to EmployeeDTO to return result
+            var response = new EmployeeDTO
             {
-                int newDepartmentId;
-                var newDep = await _db.Departments.FirstOrDefaultAsync(e => e.Name == newEmployee.DepartmentName);
-                if (newDep == null)
-                {
-                    var dep = new Department { Name = newEmployee.DepartmentName };
-                    await _db.AddAsync(dep);
-                    await _db.SaveChangesAsync();
-                    newDepartmentId = dep.Id;
-                }
-                else
-                {
-                    newDepartmentId = newDep.Id;
-                }
-                employee.DepartmentId = newDepartmentId;
-            }
+                Id = updatedEmployee.Id,
+                Name = updatedEmployee.Name,
+                Birthday = updatedEmployee.Birthday,
+                WorksFrom = updatedEmployee.WorksFrom,
+                Salary = updatedEmployee.Salary,
+                DepartmentName = updatedEmployee.Department!.Name
+                //DepartmentName = department.Name
+            };
 
-            await _db.SaveChangesAsync();
-            newEmployee.Id = employee.Id;
-
-            return Ok(newEmployee);
+            return Ok(response);
         }
 
+        /// <summary>
+        /// Удаление сотрудника по id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
-            var employee = await _db.Employees.FirstOrDefaultAsync(e => e.Id == id);
-            if (employee == null)
+            var deletedEmployee = await employeesRepository.DeleteEmployeeAsync(id);
+            
+            if (deletedEmployee == null)
             {
                 return NotFound($"Epmloyee is not found (id = {id}). No changes made.");
             }
-
-            _db.Employees.Remove(employee);
-            await _db.SaveChangesAsync();
 
             return Ok();
         }

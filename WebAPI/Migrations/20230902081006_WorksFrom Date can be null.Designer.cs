@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using WebAPI.DataBase;
+using WebAPI.DbContext;
 
 #nullable disable
 
 namespace WebAPI.Migrations
 {
-    [DbContext(typeof(CompanyDbContext))]
+    [DbContext(typeof(CompanyMSSqlDbContext))]
     [Migration("20230902081006_WorksFrom Date can be null")]
     partial class WorksFromDatecanbenull
     {

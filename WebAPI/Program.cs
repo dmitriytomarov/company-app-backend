@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using WebAPI.DataBase;
+using WebAPI.DbContext;
 using WebAPI.Controllers;
 using System.Text.Json.Serialization;
+using WebAPI.DbRepository.Interfaces;
+using WebAPI.DbRepository.Implementations;
 
 namespace WebAPI
 {
@@ -12,7 +14,6 @@ namespace WebAPI
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
             builder.Services.AddControllers().AddJsonOptions(
                 opt => opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
@@ -20,11 +21,11 @@ namespace WebAPI
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            //builder.Services.AddJson
-
             string connection = builder.Configuration.GetConnectionString("DefaultConnection")!;
-            builder.Services.AddDbContext<CompanyDbContext>(options => options.UseSqlServer(connection));
+            builder.Services.AddDbContext<CompanyMSSqlDbContext>(options => options.UseSqlServer(connection));
 
+            builder.Services.AddScoped<IEmployeesRepository, EmployeesRepositoryMSSQL>();
+            builder.Services.AddScoped<IDepartmentsRepository, DepartmentsRepositoryMSSQL>();
 
             var app = builder.Build();
 

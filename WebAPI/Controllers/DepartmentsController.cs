@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebAPI.DataBase;
+using WebAPI.DbContext;
+using WebAPI.DbRepository.Interfaces;
 using WebAPI.Model;
 
 namespace WebAPI.Controllers
@@ -10,15 +11,19 @@ namespace WebAPI.Controllers
     [ApiController]
     public class DepartmentsController : ControllerBase
     {
-        private readonly CompanyDbContext _db;
-        public DepartmentsController(CompanyDbContext db) { _db = db; }
+        private readonly IDepartmentsRepository departmentsRepository;
+
+        public DepartmentsController(IDepartmentsRepository departmentsRepository)
+        {
+            this.departmentsRepository = departmentsRepository;
+        }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetDepartmentNames()
         {
-            var departmens = await _db.Departments.Select(e => e.Name).ToListAsync();
+            var departmens = await departmentsRepository.GetDepartmentsNamesAsync();
             return Ok(departmens);
         }
     }
