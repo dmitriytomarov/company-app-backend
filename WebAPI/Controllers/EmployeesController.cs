@@ -34,7 +34,7 @@ namespace WebAPI.Controllers
             var employees = await employeesRepository.GetEmployeesAsync();
             var employeesDTO = new List<EmployeeDTO>();
 
-            //Convert Employee list to EmployeeDTO list
+            //Маппинг из Employee list в EmployeeDTO list
             if (employees != null)
             {
                 foreach (var employee in employees)
@@ -58,12 +58,12 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:Guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetEmployeeById(int id)
+        public async Task<IActionResult> GetEmployeeById(Guid id)
         {
             var employee = await employeesRepository.GetEmployeeByIdAsync(id);
             
@@ -72,7 +72,7 @@ namespace WebAPI.Controllers
                 return NotFound($"Epmloyee is not found (id = {id}).");
             }
 
-            //Map from Employee to EmployeeDTO to return this back
+            //Маппинг из Employee в EmployeeDTO
             var employeeDTO = new EmployeeDTO
             {
                 Id = employee.Id,
@@ -99,12 +99,12 @@ namespace WebAPI.Controllers
         {
             if (employee == null) return Ok();
 
-            //Check if requested department already exists
+            //Проверим существует ли заданный департамент
             var department = await departmentsRepository.GetDepartmentByNameAsync(employee.DepartmentName);
 
             if (department == null)
             {
-                //Create new Department in Database
+                //Создание нового департамента в базе
                 department = new Department
                 {
                     Name = employee.DepartmentName
@@ -112,7 +112,7 @@ namespace WebAPI.Controllers
                 department = await departmentsRepository.AddDepartmentAsync(department);
             }
 
-            //Map EmployeeDTO to Employee to create new Employee in Database
+            //Маппинг EmployeeDTO в Employee перед созданием нового сотрудника
             var newEmployee = new Employee
             {
                 Name = employee.Name,
@@ -124,7 +124,7 @@ namespace WebAPI.Controllers
 
             newEmployee = await employeesRepository.AddEmployeeAsync(newEmployee);
 
-            //Map to EmployeeDTO to return result
+            //Маппинг в EmployeeDTO чтобы вернуть результат
             var addedEmployee = new EmployeeDTO
             {
                 Id = newEmployee.Id,
@@ -144,18 +144,18 @@ namespace WebAPI.Controllers
         /// <param name="id"></param>
         /// <param name="newEmployee"></param>
         /// <returns></returns>
-        [HttpPut("{id:int}")]
+        [HttpPut("{id:Guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateEmployee(int id, UpdateEmployeeDTO newEmployee)
+        public async Task<IActionResult> UpdateEmployee(Guid id, UpdateEmployeeDTO newEmployee)
         {
             var department = await departmentsRepository.GetDepartmentByNameAsync(newEmployee.DepartmentName);
 
             if (department == null)
             {
-                //Create new Department in Database
+                //Создание нового департамента в базе
                 department = new Department
                 {
                     Name = newEmployee.DepartmentName
@@ -163,7 +163,7 @@ namespace WebAPI.Controllers
                 department = await departmentsRepository.AddDepartmentAsync(department);
             }
 
-            //Map to Employee to update in Database
+            //Маппинг в Employee перед обновлением в базе
             var employeeForUpdate = new Employee
             {
                 Id = id,
@@ -181,7 +181,7 @@ namespace WebAPI.Controllers
                 return NotFound($"Epmloyee is not found (id = {id}). No changes made.");
             }
 
-            //Map Employee back to EmployeeDTO to return result
+            //Маппинг Employee обратно в EmployeeDTO 
             var response = new EmployeeDTO
             {
                 Id = updatedEmployee.Id,
@@ -190,7 +190,6 @@ namespace WebAPI.Controllers
                 WorksFrom = updatedEmployee.WorksFrom,
                 Salary = updatedEmployee.Salary,
                 DepartmentName = updatedEmployee.Department!.Name
-                //DepartmentName = department.Name
             };
 
             return Ok(response);
@@ -201,11 +200,11 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id:Guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteEmployee(int id)
+        public async Task<IActionResult> DeleteEmployee(Guid id)
         {
             var deletedEmployee = await employeesRepository.DeleteEmployeeAsync(id);
             

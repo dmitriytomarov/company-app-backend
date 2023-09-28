@@ -10,7 +10,9 @@ namespace WebAPI.DbRepository.Implementations
         private readonly CompanyMSSqlDbContext dbContext;
 
         public DepartmentsRepositoryMSSQL(CompanyMSSqlDbContext dbContext)
-        { this.dbContext = dbContext; }
+        { 
+            this.dbContext = dbContext; 
+        }
 
         public async Task<Department> AddDepartmentAsync(Department department)
         {

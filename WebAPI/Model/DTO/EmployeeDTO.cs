@@ -4,7 +4,7 @@ namespace WebAPI.Model.DTO
 {
     public class EmployeeDTO
     {
-        public int Id { get; internal set; }
+        public Guid Id { get; internal set; }
         public string DepartmentName { get; set; } = null!;
         [Required]
         public string Name { get; set; } = null!;

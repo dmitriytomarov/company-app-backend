@@ -3,7 +3,6 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebAPI.DbContext;
 
@@ -12,11 +11,9 @@ using WebAPI.DbContext;
 namespace WebAPI.Migrations
 {
     [DbContext(typeof(CompanyMSSqlDbContext))]
-    [Migration("20230902081006_WorksFrom Date can be null")]
-    partial class WorksFromDatecanbenull
+    partial class CompanyMSSqlDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,13 +22,11 @@ namespace WebAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("WebAPI.Model.Department", b =>
+            modelBuilder.Entity("WebAPI.Model.Domain.Department", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -42,19 +37,17 @@ namespace WebAPI.Migrations
                     b.ToTable("Departments");
                 });
 
-            modelBuilder.Entity("WebAPI.Model.Employee", b =>
+            modelBuilder.Entity("WebAPI.Model.Domain.Employee", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("Birthday")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -73,9 +66,9 @@ namespace WebAPI.Migrations
                     b.ToTable("Employees");
                 });
 
-            modelBuilder.Entity("WebAPI.Model.Employee", b =>
+            modelBuilder.Entity("WebAPI.Model.Domain.Employee", b =>
                 {
-                    b.HasOne("WebAPI.Model.Department", "Department")
+                    b.HasOne("WebAPI.Model.Domain.Department", "Department")
                         .WithMany()
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.Cascade)

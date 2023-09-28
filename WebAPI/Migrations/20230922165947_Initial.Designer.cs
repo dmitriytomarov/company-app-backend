@@ -12,8 +12,8 @@ using WebAPI.DbContext;
 namespace WebAPI.Migrations
 {
     [DbContext(typeof(CompanyMSSqlDbContext))]
-    [Migration("20230831183211_test")]
-    partial class test
+    [Migration("20230922165947_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,13 +25,11 @@ namespace WebAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("WebAPI.Model.Department", b =>
+            modelBuilder.Entity("WebAPI.Model.Domain.Department", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -42,19 +40,17 @@ namespace WebAPI.Migrations
                     b.ToTable("Departments");
                 });
 
-            modelBuilder.Entity("WebAPI.Model.Employee", b =>
+            modelBuilder.Entity("WebAPI.Model.Domain.Employee", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("Birthday")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -63,7 +59,7 @@ namespace WebAPI.Migrations
                     b.Property<int>("Salary")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("WorksFrom")
+                    b.Property<DateTime?>("WorksFrom")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -73,20 +69,15 @@ namespace WebAPI.Migrations
                     b.ToTable("Employees");
                 });
 
-            modelBuilder.Entity("WebAPI.Model.Employee", b =>
+            modelBuilder.Entity("WebAPI.Model.Domain.Employee", b =>
                 {
-                    b.HasOne("WebAPI.Model.Department", "Department")
-                        .WithMany("Employees")
+                    b.HasOne("WebAPI.Model.Domain.Department", "Department")
+                        .WithMany()
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Department");
-                });
-
-            modelBuilder.Entity("WebAPI.Model.Department", b =>
-                {
-                    b.Navigation("Employees");
                 });
 #pragma warning restore 612, 618
         }

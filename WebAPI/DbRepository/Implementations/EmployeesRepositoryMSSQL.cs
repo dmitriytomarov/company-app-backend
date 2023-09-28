@@ -27,7 +27,7 @@ namespace WebAPI.DbRepository.Implementations
             return employee;
         }
 
-        public async Task<Employee> DeleteEmployeeAsync(int employeeId)
+        public async Task<Employee> DeleteEmployeeAsync(Guid employeeId)
         {
             var employee = await dbContext.Employees.FirstOrDefaultAsync(e => e.Id == employeeId);
             if (employee != null)
@@ -39,7 +39,7 @@ namespace WebAPI.DbRepository.Implementations
             return employee;
         }
 
-        public async Task<Employee> GetEmployeeByIdAsync(int employeeId)
+        public async Task<Employee> GetEmployeeByIdAsync(Guid employeeId)
         {
             return await dbContext.Employees.Include(d => d.Department).FirstOrDefaultAsync(e => e.Id == employeeId);
         }
